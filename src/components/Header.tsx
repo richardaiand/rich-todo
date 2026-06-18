@@ -7,7 +7,7 @@ interface HeaderProps {
 }
 
 export default function Header({ onOpenTheme }: HeaderProps) {
-  const { theme, searchQuery, setSearchQuery, setSelectedTaskId } = useTodos();
+  const { theme, searchQuery, setSearchQuery, setSelectedTaskId, studTotal } = useTodos();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   return (
@@ -62,7 +62,21 @@ export default function Header({ onOpenTheme }: HeaderProps) {
         </div>
       </div>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
+        {/* Stud Total Counter */}
+        <div 
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold stud-total-pop"
+          style={{ 
+            backgroundColor: '#C91A09',
+            color: 'white',
+            boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.15)',
+          }}
+          key={studTotal}
+        >
+          <div className="w-3 h-3 rounded-full" style={{ background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.6), rgba(255,255,255,0.1) 50%, transparent 70%)', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.3)' }} />
+          <span>{studTotal}</span>
+        </div>
+
         <button 
           className="btn-icon w-8 h-8 hover:bg-black/5 dark:hover:bg-white/10"
           style={{ color: theme.textSecondary }}

@@ -38,6 +38,85 @@
   }
 }
 
+/* ===== STUDDED BASEPLATE BACKGROUND ===== */
+.studded-bg {
+  position: relative;
+  background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 100%);
+  overflow: hidden;
+}
+
+.studded-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 8px 6px at 12px 8px, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.08) 40%, transparent 70%),
+              radial-gradient(ellipse 14px 10px at 12px 14px, rgba(0,0,0,0.12) 0%, transparent 70%);
+  background-size: 28px 24px;
+  opacity: 0.7;
+}
+
+.studded-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 6px 4px at 26px 20px, rgba(255,255,255,0.12) 0%, transparent 60%),
+              radial-gradient(ellipse 12px 8px at 26px 26px, rgba(0,0,0,0.08) 0%, transparent 60%);
+  background-size: 28px 24px;
+  opacity: 0.5;
+}
+
+/* ===== LEGO STUD POPUP / FLOAT ANIMATION ===== */
+.stud-popup {
+  position: fixed;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  animation: studFloatToTop 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.stud-popup::before {
+  content: '';
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  right: 10%;
+  bottom: 10%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.5), transparent 60%);
+}
+
+@keyframes studFloatToTop {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  30% {
+    opacity: 1;
+    transform: translate(var(--tx, 20px), -40px) scale(1.3) rotate(15deg);
+  }
+  70% {
+    opacity: 0.8;
+    transform: translate(var(--tx2, -10px), -200px) scale(1) rotate(-10deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--tx2, 0px), var(--target-y, -400px)) scale(0.3) rotate(0deg);
+  }
+}
+
+.stud-total-pop {
+  animation: studTotalPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes studTotalPop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.5); }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
 /* ===== LEGO THEME STYLES ===== */
 
 /* Lego stud checkbox */
@@ -51,6 +130,7 @@
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.15), 
               0 1px 2px rgba(0,0,0,0.1);
   border-width: 0 !important;
+  flex-shrink: 0;
 }
 
 .lego-stud::before {
@@ -100,154 +180,27 @@
               0 2px 4px rgba(0,0,0,0.05);
 }
 
+/* Task dropdown expand */
+.task-dropdown {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+              opacity 0.2s ease,
+              padding 0.3s ease;
+}
+
+.task-dropdown.open {
+  max-height: 500px;
+  opacity: 1;
+}
+
 /* Completed task brick animation */
 .lego-brick-complete {
   animation: brickSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Progress bar lego fill animation */
-.lego-fill {
-  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.lego-fill::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-  animation: legoShine 2s infinite;
-}
-
-/* ===== LEGO STACK ANIMATIONS ===== */
-
-.lego-brick-hidden {
-  opacity: 0;
-  transform: scale(0);
-  height: 0;
-  width: 0;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-}
-
-.lego-brick-stack {
-  animation: brickStack 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-
-.lego-brick-land {
-  animation: brickLand 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.lego-tower-complete {
-  animation: towerShake 0.4s ease-in-out;
-}
-
-.lego-tower-break {
-  animation: towerCollapse 0.3s ease forwards;
-}
-
-.lego-brick-fly {
-  animation: brickFly 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-}
-
-@keyframes brickStack {
-  0% {
-    opacity: 0;
-    transform: translateY(-40px) scale(0.5) rotate(-10deg);
-  }
-  60% {
-    opacity: 1;
-    transform: translateY(4px) scale(1.05) rotate(2deg);
-  }
-  80% {
-    transform: translateY(-2px) scale(0.98) rotate(-1deg);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1) rotate(0deg);
-  }
-}
-
-@keyframes brickLand {
-  0% {
-    opacity: 0;
-    transform: translateY(-60px) scale(0.3);
-  }
-  50% {
-    opacity: 1;
-    transform: translateY(5px) scale(1.1);
-  }
-  70% {
-    transform: translateY(-3px) scale(0.95);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes towerShake {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-4px) rotate(-1deg); }
-  40% { transform: translateX(4px) rotate(1deg); }
-  60% { transform: translateX(-3px) rotate(-0.5deg); }
-  80% { transform: translateX(3px) rotate(0.5deg); }
-}
-
-@keyframes towerCollapse {
-  0% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  100% {
-    opacity: 0.3;
-    transform: scale(0.8) translateY(20px);
-  }
-}
-
-@keyframes brickFly {
-  0% {
-    opacity: 1;
-    transform: translate(0, 0) rotate(0deg) scale(1);
-  }
-  20% {
-    opacity: 1;
-    transform: translate(var(--fly-x, 30px), -20px) rotate(var(--fly-r, 45deg)) scale(1.1);
-  }
-  60% {
-    opacity: 0.8;
-    transform: translate(var(--fly-x, 60px), var(--fly-y, 80px)) rotate(calc(var(--fly-r, 45deg) * 2)) scale(0.9);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(var(--fly-x, 100px), var(--fly-y, 150px)) rotate(calc(var(--fly-r, 45deg) * 3)) scale(0.5);
-  }
-}
-
-/* Apply dynamic fly directions via nth-child */
-.lego-brick-fly:nth-child(1) { --fly-x: -60px; --fly-y: 100px; --fly-r: -45deg; }
-.lego-brick-fly:nth-child(2) { --fly-x: 50px; --fly-y: 120px; --fly-r: 60deg; }
-.lego-brick-fly:nth-child(3) { --fly-x: -40px; --fly-y: 90px; --fly-r: -30deg; }
-.lego-brick-fly:nth-child(4) { --fly-x: 70px; --fly-y: 110px; --fly-r: 75deg; }
-.lego-brick-fly:nth-child(5) { --fly-x: -50px; --fly-y: 130px; --fly-r: -60deg; }
-.lego-brick-fly:nth-child(6) { --fly-x: 40px; --fly-y: 100px; --fly-r: 45deg; }
-.lego-brick-fly:nth-child(7) { --fly-x: -70px; --fly-y: 115px; --fly-r: -75deg; }
-.lego-brick-fly:nth-child(8) { --fly-x: 60px; --fly-y: 95px; --fly-r: 30deg; }
-
-/* Subtask row hover reveals delete button faster */
-.lego-subtask-row {
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
-}
-
-.lego-subtask-row:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-}
+/* ===== KEYFRAMES ===== */
 
 @keyframes legoSnap {
   0% { transform: scale(1); }
@@ -276,16 +229,6 @@
     opacity: 0.6; 
     transform: translateX(0) scale(1); 
   }
-}
-
-@keyframes legoShine {
-  0% { left: -100%; }
-  100% { left: 100%; }
-}
-
-@keyframes studBounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
 }
 
 @keyframes brickAppear {

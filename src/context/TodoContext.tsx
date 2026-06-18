@@ -19,6 +19,9 @@ interface TodoContextType {
   setSearchQuery: (q: string) => void;
   setTheme: (theme: Theme) => void;
   
+  studTotal: number;
+  incrementStudTotal: () => void;
+  
   // Task CRUD
   addTask: (title: string, listId?: string) => Task;
   updateTask: (id: string, updates: Partial<Task>) => void;
@@ -47,6 +50,7 @@ interface TodoContextType {
   getTodayCount: () => number;
   getImportantCount: () => number;
   getPlannedCount: () => number;
+  getCompletedTasksCount: () => number;
 }
 
 const TodoContext = createContext<TodoContextType | undefined>(undefined);
@@ -163,6 +167,7 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
   const [currentListId, setCurrentListId] = useLocalStorage<string>('rich-todo-current-list', 'my-day');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [theme, setTheme] = useLocalStorage<Theme>('rich-todo-theme', THEMES.find(t => t.id === 'lego') || THEMES[0]);
+  const [studTotal, setStudTotal] = useLocalStorage<number>('rich-todo-stud-total', 0);
   const [searchQuery, setSearchQuery] = useState('');
 
   const currentList = lists.find(l => l.id === currentListId);
@@ -223,6 +228,14 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
   const getPlannedCount = useCallback(() => {
     return tasks.filter(t => !t.completed && t.dueDate).length;
   }, [tasks]);
+
+  const getCompletedTasksCount = useCallback(() => {
+    return tasks.filter(t => t.completed).length;
+  }, [tasks]);
+
+  const incrementStudTotal = useCallback(() => {
+    setStudTotal(prev => prev + 1);
+  }, [setStudTotal]);
 
   const addTask = useCallback((title: string, listId?: string) => {
     const targetListId = listId || currentListId;
@@ -353,6 +366,9 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
     addList,
     deleteList,
     addTag,
+    studTotal,
+    incrementStudTotal,
+    getCompletedTasksCount,
     getFilteredTasks,
     getTaskById,
     getTasksByList,
@@ -361,11 +377,12 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
     getImportantCount,
     getPlannedCount,
   }), [
-    tasks, lists, tags, currentListId, selectedTaskId, theme, searchQuery,
+    tasks, lists, tags, currentListId, selectedTaskId, theme, searchQuery, studTotal,
     addTask, updateTask, deleteTask, toggleTaskComplete, toggleMyDay, toggleImportant,
     addSubTask, toggleSubTask, deleteSubTask, addList, deleteList, addTag,
     getFilteredTasks, getTaskById, getTasksByList, getOverdueCount, getTodayCount,
     getImportantCount, getPlannedCount, setCurrentListId, setSearchQuery, setTheme,
+    incrementStudTotal, getCompletedTasksCount,
   ]);
 
   return (

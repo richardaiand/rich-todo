@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, Star, Sun, Plus, Trash2, Hash } from 'lucide-react';
 import { useTodos } from '../context/TodoContext';
-import LegoStack from './LegoStack';
 import { Priority, Recurrence, Task } from '../types';
 import { format, parseISO } from 'date-fns';
 
@@ -24,13 +23,11 @@ export default function TaskDetails() {
   const {
     selectedTaskId, setSelectedTaskId, getTaskById,
     updateTask, toggleTaskComplete, toggleMyDay, toggleImportant,
-    addSubTask, toggleSubTask, deleteSubTask, deleteTask,
+    deleteTask,
     tags, addTag, theme,
   } = useTodos();
 
   const task = selectedTaskId ? getTaskById(selectedTaskId) : undefined;
-  const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
-  const [showAddSubtask, setShowAddSubtask] = useState(false);
   const [newTagName, setNewTagName] = useState('');
   const [showAddTag, setShowAddTag] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -46,14 +43,6 @@ export default function TaskDetails() {
 
   const handleUpdateTask = (updates: Partial<Task>) => {
     updateTask(task.id, updates);
-  };
-
-  const handleAddSubtask = () => {
-    if (newSubtaskTitle.trim()) {
-      addSubTask(task.id, newSubtaskTitle.trim());
-      setNewSubtaskTitle('');
-      setShowAddSubtask(false);
-    }
   };
 
   const handleAddTag = () => {
@@ -74,8 +63,6 @@ export default function TaskDetails() {
       : [...task.tags, tagId];
     handleUpdateTask({ tags: newTags });
   };
-
-  const completedSubtasks = task.subTasks.filter(st => st.completed).length;
 
   return (
     <aside 
@@ -283,106 +270,6 @@ export default function TaskDetails() {
             >
               <Plus size={12} />
               Add tag
-            </button>
-          )}
-        </div>
-
-        {/* Subtasks / Steps with Lego Stack */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-bold uppercase tracking-wider" style={{ color: theme.textSecondary }}>
-              Steps
-            </label>
-            <span className="text-xs font-bold" style={{ color: theme.textSecondary }}>
-              {completedSubtasks}/{task.subTasks.length}
-            </span>
-          </div>
-
-          {/* Lego Brick Stack Visualization */}
-          <LegoStack
-            subTasks={task.subTasks}
-            bgColor={theme.bg}
-          />
-
-          {/* Step List */}
-          <div className="space-y-1">
-            {task.subTasks.map(subtask => (
-              <div
-                key={subtask.id}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl group lego-brick lego-subtask-row"
-                style={{ backgroundColor: theme.bg, borderRadius: '10px' }}
-              >
-                <button
-                  onClick={() => toggleSubTask(task.id, subtask.id)}
-                  className={`shrink-0 w-5 h-5 flex items-center justify-center lego-stud ${subtask.completed ? 'checked' : 'unchecked'}`}
-                  style={{
-                    backgroundColor: subtask.completed ? '#C91A09' : '#E5E7EB',
-                    boxShadow: subtask.completed
-                      ? 'inset 0 2px 4px rgba(0,0,0,0.3), 0 2px 4px rgba(201,26,9,0.3)'
-                      : 'inset 0 2px 4px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08)',
-                  }}
-                >
-                  {subtask.completed && (
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  )}
-                </button>
-                <span
-                  className="flex-1 text-sm transition-all"
-                  style={{
-                    color: subtask.completed ? theme.textSecondary : theme.text,
-                    textDecoration: subtask.completed ? 'line-through' : 'none',
-                  }}
-                >
-                  {subtask.title}
-                </span>
-                <button
-                  onClick={() => deleteSubTask(task.id, subtask.id)}
-                  className="opacity-0 group-hover:opacity-100 btn-icon w-6 h-6 rounded hover:bg-red-500/10 transition-opacity"
-                  style={{ color: '#d83b01' }}
-                >
-                  <Trash2 size={12} />
-                </button>
-              </div>
-            ))}
-          </div>
-
-          {showAddSubtask ? (
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newSubtaskTitle}
-                onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                placeholder="Add a step"
-                className="flex-1 input-field text-sm"
-                style={{
-                  backgroundColor: theme.bg,
-                  borderColor: theme.border,
-                  color: theme.text,
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleAddSubtask();
-                  if (e.key === 'Escape') { setShowAddSubtask(false); setNewSubtaskTitle(''); }
-                }}
-                autoFocus
-              />
-              <button
-                onClick={handleAddSubtask}
-                className="px-3 py-1.5 rounded-md text-sm font-medium text-white"
-                style={{ backgroundColor: theme.accent }}
-              >
-                <Plus size={16} />
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setShowAddSubtask(true)}
-              className="flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-md w-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-              style={{ color: theme.accent }}
-            >
-              <Plus size={16} />
-              Add step
             </button>
           )}
         </div>
