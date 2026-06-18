@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, Star, Sun, Plus, Trash2, Hash } from 'lucide-react';
 import { useTodos } from '../context/TodoContext';
+import LegoStack from './LegoStack';
 import { Priority, Recurrence, Task } from '../types';
 import { format, parseISO } from 'date-fns';
 
@@ -75,7 +76,6 @@ export default function TaskDetails() {
   };
 
   const completedSubtasks = task.subTasks.filter(st => st.completed).length;
-  const progress = task.subTasks.length > 0 ? (completedSubtasks / task.subTasks.length) * 100 : 0;
 
   return (
     <aside 
@@ -287,35 +287,29 @@ export default function TaskDetails() {
           )}
         </div>
 
-        {/* Subtasks */}
-        <div className="space-y-2">
+        {/* Subtasks / Steps with Lego Stack */}
+        <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: theme.textSecondary }}>
+            <label className="text-xs font-bold uppercase tracking-wider" style={{ color: theme.textSecondary }}>
               Steps
             </label>
-            <span className="text-xs" style={{ color: theme.textSecondary }}>
+            <span className="text-xs font-bold" style={{ color: theme.textSecondary }}>
               {completedSubtasks}/{task.subTasks.length}
             </span>
           </div>
-          
-          {task.subTasks.length > 0 && (
-            <div className="w-full h-3 rounded-full overflow-hidden" style={{ backgroundColor: theme.border, borderRadius: '999px' }}>
-              <div 
-                className="h-full lego-fill"
-                style={{ 
-                  width: `${progress}%`,
-                  backgroundColor: '#C91A09',
-                  borderRadius: '999px',
-                }}
-              />
-            </div>
-          )}
 
+          {/* Lego Brick Stack Visualization */}
+          <LegoStack
+            subTasks={task.subTasks}
+            bgColor={theme.bg}
+          />
+
+          {/* Step List */}
           <div className="space-y-1">
             {task.subTasks.map(subtask => (
-              <div 
+              <div
                 key={subtask.id}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl group lego-brick"
+                className="flex items-center gap-2 px-3 py-2 rounded-xl group lego-brick lego-subtask-row"
                 style={{ backgroundColor: theme.bg, borderRadius: '10px' }}
               >
                 <button
@@ -323,8 +317,8 @@ export default function TaskDetails() {
                   className={`shrink-0 w-5 h-5 flex items-center justify-center lego-stud ${subtask.completed ? 'checked' : 'unchecked'}`}
                   style={{
                     backgroundColor: subtask.completed ? '#C91A09' : '#E5E7EB',
-                    boxShadow: subtask.completed 
-                      ? 'inset 0 2px 4px rgba(0,0,0,0.3), 0 2px 4px rgba(201,26,9,0.3)' 
+                    boxShadow: subtask.completed
+                      ? 'inset 0 2px 4px rgba(0,0,0,0.3), 0 2px 4px rgba(201,26,9,0.3)'
                       : 'inset 0 2px 4px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08)',
                   }}
                 >
@@ -334,7 +328,7 @@ export default function TaskDetails() {
                     </svg>
                   )}
                 </button>
-                <span 
+                <span
                   className="flex-1 text-sm transition-all"
                   style={{
                     color: subtask.completed ? theme.textSecondary : theme.text,
@@ -362,7 +356,7 @@ export default function TaskDetails() {
                 onChange={(e) => setNewSubtaskTitle(e.target.value)}
                 placeholder="Add a step"
                 className="flex-1 input-field text-sm"
-                style={{ 
+                style={{
                   backgroundColor: theme.bg,
                   borderColor: theme.border,
                   color: theme.text,
