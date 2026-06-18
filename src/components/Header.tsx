@@ -26,7 +26,7 @@ export default function Header({ onOpenTheme }: HeaderProps) {
         >
           <Menu size={20} />
         </button>
-        <span className="font-semibold text-sm">To Do</span>
+        <span className="font-bold text-sm tracking-wide">BRICKLIST</span>
       </div>
 
       <div className="flex-1 max-w-xl mx-4">

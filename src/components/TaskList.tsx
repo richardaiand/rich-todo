@@ -11,10 +11,10 @@ const LIST_ICONS: Record<string, React.ReactNode> = {
 };
 
 const LIST_GRADIENTS: Record<string, string> = {
-  'my-day': 'linear-gradient(135deg, #ffc107 0%, #ff9800 100%)',
-  'important': 'linear-gradient(135deg, #d83b01 0%, #ff5722 100%)',
-  'planned': 'linear-gradient(135deg, #0078d4 0%, #00bcd4 100%)',
-  'all': 'linear-gradient(135deg, #8764b8 0%, #9c27b0 100%)',
+  'my-day': 'linear-gradient(135deg, #FFC107 0%, #FF9800 100%)',
+  'important': 'linear-gradient(135deg, #C91A09 0%, #8B0000 100%)',
+  'planned': 'linear-gradient(135deg, #0055BF 0%, #00BCD4 100%)',
+  'all': 'linear-gradient(135deg, #237841 0%, #4CAF50 100%)',
 };
 
 export default function TaskList() {
@@ -178,26 +178,29 @@ export default function TaskList() {
               <div
                 key={task.id}
                 onClick={() => setSelectedTaskId(task.id)}
-                className="group relative flex items-start gap-3 px-4 py-3 rounded-lg border cursor-pointer transition-all duration-150"
+                className="group relative flex items-start gap-3 px-4 py-3 rounded-xl border cursor-pointer lego-brick task-appear"
                 style={{
                   backgroundColor: isSelected ? theme.accentLight : theme.card,
                   borderColor: isSelected ? theme.accent : theme.border,
+                  borderRadius: theme.id === 'lego' ? '12px' : '8px',
                 }}
               >
-                {/* Checkbox */}
+                {/* Checkbox - Lego Stud Style */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     toggleTaskComplete(task.id);
                   }}
-                  className="mt-0.5 shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-150"
+                  className={`mt-0.5 shrink-0 w-6 h-6 flex items-center justify-center lego-stud ${task.completed ? 'checked' : 'unchecked'}`}
                   style={{
-                    borderColor: task.completed ? theme.accent : theme.border,
-                    backgroundColor: task.completed ? theme.accent : 'transparent',
+                    backgroundColor: task.completed ? '#C91A09' : '#E5E7EB',
+                    boxShadow: task.completed 
+                      ? 'inset 0 2px 4px rgba(0,0,0,0.3), 0 2px 4px rgba(201,26,9,0.3)' 
+                      : 'inset 0 2px 4px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08)',
                   }}
                 >
                   {task.completed && (
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                   )}
@@ -322,27 +325,27 @@ export default function TaskList() {
         {completedTasks.length > 0 && (
           <div className="mt-4">
             <div 
-              className="text-xs font-semibold uppercase tracking-wider px-4 py-2"
+              className="text-xs font-bold uppercase tracking-wider px-4 py-2"
               style={{ color: theme.textSecondary }}
             >
               Completed ({completedTasks.length})
             </div>
-            <div className="space-y-1">
+            <div className="space-y-2">
               {completedTasks.map(task => (
                 <div
                   key={task.id}
-                  className="flex items-start gap-3 px-4 py-2.5 rounded-lg opacity-60 hover:opacity-100 transition-opacity"
-                  style={{ backgroundColor: theme.card }}
+                  className="flex items-start gap-3 px-4 py-2.5 rounded-xl opacity-60 hover:opacity-100 transition-opacity lego-brick lego-brick-complete"
+                  style={{ backgroundColor: theme.card, borderRadius: '12px' }}
                 >
                   <button
                     onClick={() => toggleTaskComplete(task.id)}
-                    className="mt-0.5 shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center"
+                    className="mt-0.5 shrink-0 w-6 h-6 flex items-center justify-center lego-stud checked"
                     style={{
-                      borderColor: theme.accent,
-                      backgroundColor: theme.accent,
+                      backgroundColor: '#C91A09',
+                      boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3), 0 2px 4px rgba(201,26,9,0.3)',
                     }}
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                   </button>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Sun, Star, Calendar, Home, List, Plus, Trash2, X } from 'lucide-react';
 import { useTodos } from '../context/TodoContext';
 import { TodoList } from '../types';

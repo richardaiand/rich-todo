@@ -123,14 +123,16 @@ export default function TaskDetails() {
         <div className="flex items-start gap-3">
           <button
             onClick={() => toggleTaskComplete(task.id)}
-            className="mt-1 shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-150"
+            className={`mt-1 shrink-0 w-6 h-6 flex items-center justify-center lego-stud ${task.completed ? 'checked' : 'unchecked'}`}
             style={{
-              borderColor: task.completed ? theme.accent : theme.border,
-              backgroundColor: task.completed ? theme.accent : 'transparent',
+              backgroundColor: task.completed ? '#C91A09' : '#E5E7EB',
+              boxShadow: task.completed 
+                ? 'inset 0 2px 4px rgba(0,0,0,0.3), 0 2px 4px rgba(201,26,9,0.3)' 
+                : 'inset 0 2px 4px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08)',
             }}
           >
             {task.completed && (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             )}
@@ -297,12 +299,13 @@ export default function TaskDetails() {
           </div>
           
           {task.subTasks.length > 0 && (
-            <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: theme.border }}>
+            <div className="w-full h-3 rounded-full overflow-hidden" style={{ backgroundColor: theme.border, borderRadius: '999px' }}>
               <div 
-                className="h-full rounded-full transition-all duration-300"
+                className="h-full lego-fill"
                 style={{ 
                   width: `${progress}%`,
-                  backgroundColor: theme.accent,
+                  backgroundColor: '#C91A09',
+                  borderRadius: '999px',
                 }}
               />
             </div>
@@ -312,19 +315,21 @@ export default function TaskDetails() {
             {task.subTasks.map(subtask => (
               <div 
                 key={subtask.id}
-                className="flex items-center gap-2 px-3 py-2 rounded-md group"
-                style={{ backgroundColor: theme.bg }}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl group lego-brick"
+                style={{ backgroundColor: theme.bg, borderRadius: '10px' }}
               >
                 <button
                   onClick={() => toggleSubTask(task.id, subtask.id)}
-                  className="shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-all"
+                  className={`shrink-0 w-5 h-5 flex items-center justify-center lego-stud ${subtask.completed ? 'checked' : 'unchecked'}`}
                   style={{
-                    borderColor: subtask.completed ? theme.accent : theme.border,
-                    backgroundColor: subtask.completed ? theme.accent : 'transparent',
+                    backgroundColor: subtask.completed ? '#C91A09' : '#E5E7EB',
+                    boxShadow: subtask.completed 
+                      ? 'inset 0 2px 4px rgba(0,0,0,0.3), 0 2px 4px rgba(201,26,9,0.3)' 
+                      : 'inset 0 2px 4px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08)',
                   }}
                 >
                   {subtask.completed && (
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                   )}

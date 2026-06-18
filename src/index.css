@@ -37,3 +37,148 @@
     @apply w-full px-3 py-2 rounded-md border outline-none transition-all duration-150;
   }
 }
+
+/* ===== LEGO THEME STYLES ===== */
+
+/* Lego stud checkbox */
+.lego-stud {
+  position: relative;
+  border-radius: 50% !important;
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), 
+              background-color 0.2s ease, 
+              border-color 0.2s ease,
+              box-shadow 0.2s ease;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.15), 
+              0 1px 2px rgba(0,0,0,0.1);
+  border-width: 0 !important;
+}
+
+.lego-stud::before {
+  content: '';
+  position: absolute;
+  top: 15%;
+  left: 15%;
+  right: 15%;
+  bottom: 15%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), transparent 60%);
+  pointer-events: none;
+}
+
+.lego-stud:active {
+  transform: scale(0.85);
+}
+
+.lego-stud.checked {
+  animation: legoSnap 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.25), 
+              0 2px 4px rgba(0,0,0,0.15);
+}
+
+.lego-stud.unchecked {
+  animation: legoPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Lego brick card styling */
+.lego-brick {
+  position: relative;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.2s ease;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.08), 
+              0 4px 6px rgba(0,0,0,0.05);
+}
+
+.lego-brick:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 0 rgba(0,0,0,0.08), 
+              0 6px 12px rgba(0,0,0,0.08);
+}
+
+.lego-brick:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.08), 
+              0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Completed task brick animation */
+.lego-brick-complete {
+  animation: brickSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Progress bar lego fill animation */
+.lego-fill {
+  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.lego-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: legoShine 2s infinite;
+}
+
+/* ===== KEYFRAMES ===== */
+
+@keyframes legoSnap {
+  0% { transform: scale(1); }
+  30% { transform: scale(0.6); }
+  50% { transform: scale(1.15); }
+  70% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+@keyframes legoPop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+@keyframes brickSlideIn {
+  0% { 
+    opacity: 0; 
+    transform: translateX(-20px) scale(0.95); 
+  }
+  60% { 
+    opacity: 1; 
+    transform: translateX(4px) scale(1.01); 
+  }
+  100% { 
+    opacity: 0.6; 
+    transform: translateX(0) scale(1); 
+  }
+}
+
+@keyframes legoShine {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+@keyframes studBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes brickAppear {
+  0% { 
+    opacity: 0; 
+    transform: translateY(10px) scale(0.95); 
+  }
+  60% { 
+    transform: translateY(-2px) scale(1.01); 
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateY(0) scale(1); 
+  }
+}
+
+/* Apply appear animation to new tasks */
+.task-appear {
+  animation: brickAppear 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}

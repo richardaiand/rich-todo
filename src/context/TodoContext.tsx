@@ -53,10 +53,10 @@ const TodoContext = createContext<TodoContextType | undefined>(undefined);
 
 function getDefaultLists(): TodoList[] {
   return [
-    { id: 'my-day', name: 'My Day', icon: 'sun', color: '#ffc107', isDefault: true, isSmart: true },
-    { id: 'important', name: 'Important', icon: 'star', color: '#d83b01', isDefault: true, isSmart: true },
-    { id: 'planned', name: 'Planned', icon: 'calendar', color: '#0078d4', isDefault: true, isSmart: true },
-    { id: 'all', name: 'Tasks', icon: 'home', color: '#8764b8', isDefault: true, isSmart: true },
+    { id: 'my-day', name: 'My Day', icon: 'sun', color: '#FFC107', isDefault: true, isSmart: true },
+    { id: 'important', name: 'Important', icon: 'star', color: '#C91A09', isDefault: true, isSmart: true },
+    { id: 'planned', name: 'Planned', icon: 'calendar', color: '#0055BF', isDefault: true, isSmart: true },
+    { id: 'all', name: 'Tasks', icon: 'home', color: '#237841', isDefault: true, isSmart: true },
   ];
 }
 
@@ -162,7 +162,7 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
   const [tags, setTags] = useLocalStorage<Tag[]>('rich-todo-tags', DEFAULT_TAGS);
   const [currentListId, setCurrentListId] = useLocalStorage<string>('rich-todo-current-list', 'my-day');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [theme, setTheme] = useLocalStorage<Theme>('rich-todo-theme', THEMES[0]);
+  const [theme, setTheme] = useLocalStorage<Theme>('rich-todo-theme', THEMES.find(t => t.id === 'lego') || THEMES[0]);
   const [searchQuery, setSearchQuery] = useState('');
 
   const currentList = lists.find(l => l.id === currentListId);

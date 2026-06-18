@@ -66,6 +66,20 @@ export const DEFAULT_TAGS: Tag[] = [
 
 export const THEMES: Theme[] = [
   {
+    id: 'lego',
+    name: 'Lego',
+    accent: '#C91A09',
+    accentLight: '#FFEBEE',
+    accentDark: '#8B0000',
+    bg: '#F4F4F4',
+    sidebar: '#FFFFFF',
+    card: '#FFFFFF',
+    text: '#1B2A34',
+    textSecondary: '#6B7B8C',
+    border: '#D1D5DB',
+    isDark: false,
+  },
+  {
     id: 'light-blue',
     name: 'Light Blue',
     accent: '#0078d4',
