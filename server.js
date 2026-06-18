@@ -1,6 +1,10 @@
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
+import http from 'http';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const PORT = process.env.PORT || 3000;
 const DIST_DIR = path.join(__dirname, 'dist');
@@ -30,7 +34,6 @@ const server = http.createServer((req, res) => {
   fs.readFile(filePath, (err, content) => {
     if (err) {
       if (err.code === 'ENOENT') {
-        // Try serving index.html for client-side routing
         fs.readFile(path.join(DIST_DIR, 'index.html'), (err2, content2) => {
           if (err2) {
             res.writeHead(404, { 'Content-Type': 'text/plain' });
