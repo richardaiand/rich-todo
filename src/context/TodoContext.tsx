@@ -310,10 +310,12 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
   const toggleSubTask = useCallback((taskId: string, subTaskId: string) => {
     setTasks(prev => prev.map(t => {
       if (t.id !== taskId) return t;
-      return {
-        ...t,
-        subTasks: t.subTasks.map(st => st.id === subTaskId ? { ...st, completed: !st.completed } : st),
-      };
+      // Toggle completion
+      const updatedSubTasks = t.subTasks.map(st => st.id === subTaskId ? { ...st, completed: !st.completed } : st);
+      // Re-sort: unchecked first (preserving relative order), then checked
+      const unchecked = updatedSubTasks.filter(st => !st.completed);
+      const checked = updatedSubTasks.filter(st => st.completed);
+      return { ...t, subTasks: [...unchecked, ...checked] };
     }));
   }, [setTasks]);
 

@@ -35,7 +35,7 @@ export default function TaskList() {
   const { 
     tasks, lists, tags, currentListId, selectedTaskId, setSelectedTaskId,
     addTask, deleteTask, toggleTaskComplete, toggleMyDay, toggleImportant,
-    addSubTask, toggleSubTask, deleteSubTask, reorderSubTasks, updateSubTaskTitle,
+    addSubTask, toggleSubTask, deleteSubTask, updateSubTaskTitle,
     getFilteredTasks, theme, incrementStudTotal, decrementStudTotal
   } = useTodos();
 
@@ -130,7 +130,7 @@ export default function TaskList() {
     toggleTaskComplete(taskId);
   };
 
-  // ---- AUTO-SORT STEPS ON TOGGLE ----
+  // ---- TOGGLE STEP (auto-sort lives in context toggleSubTask) ----
   const handleToggleSub = (taskId: string, subTaskId: string, e: React.MouseEvent) => {
     const target = e.currentTarget as HTMLElement;
     const rect = target.getBoundingClientRect();
@@ -146,31 +146,7 @@ export default function TaskList() {
       spawnStudPopup(rect, '#0055BF');
     }
 
-    const wasCompleted = sub.completed;
-
-    // Toggle first
     toggleSubTask(taskId, subTaskId);
-
-    // Auto-sort after toggle
-    setTimeout(() => {
-      const currentOrder = task.subTasks.map(s => s.id);
-      const others = currentOrder.filter(id => id !== subTaskId);
-      if (!wasCompleted) {
-        // Was unchecked, now checked → move to bottom
-        reorderSubTasks(taskId, [...others, subTaskId]);
-      } else {
-        // Was checked, now unchecked → bottom of unchecked section
-        const uncheckedIds = others.filter(id => {
-          const st = task.subTasks.find(s => s.id === id);
-          return st && !st.completed;
-        });
-        const checkedIds = others.filter(id => {
-          const st = task.subTasks.find(s => s.id === id);
-          return st && st.completed;
-        });
-        reorderSubTasks(taskId, [...uncheckedIds, subTaskId, ...checkedIds]);
-      }
-    }, 150);
   };
 
   const toggleExpand = (taskId: string) => {

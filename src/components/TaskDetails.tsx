@@ -26,7 +26,7 @@ export default function TaskDetails() {
   const {
     selectedTaskId, setSelectedTaskId, getTaskById,
     updateTask, toggleTaskComplete, toggleMyDay, toggleImportant,
-    deleteTask, addSubTask, toggleSubTask, deleteSubTask, updateSubTaskTitle, reorderSubTasks,
+    deleteTask, addSubTask, toggleSubTask, deleteSubTask, updateSubTaskTitle,
     tags, addTag, theme,
   } = useTodos();
 
@@ -77,33 +77,6 @@ export default function TaskDetails() {
       setNewSubtaskTitle('');
       setShowAddSubtask(false);
     }
-  };
-
-  const handleSidebarToggleSub = (subtaskId: string) => {
-    const sub = task.subTasks.find(s => s.id === subtaskId);
-    if (!sub) return;
-    playClickSound(sub.completed ? 'uncheck' : 'check');
-    const wasCompleted = sub.completed;
-    toggleSubTask(task.id, subtaskId);
-    setTimeout(() => {
-      const currentOrder = task.subTasks.map(s => s.id);
-      const others = currentOrder.filter(id => id !== subtaskId);
-      if (!wasCompleted) {
-        // Now checked → bottom
-        reorderSubTasks(task.id, [...others, subtaskId]);
-      } else {
-        // Now unchecked → bottom of unchecked
-        const uncheckedIds = others.filter(id => {
-          const st = task.subTasks.find(s => s.id === id);
-          return st && !st.completed;
-        });
-        const checkedIds = others.filter(id => {
-          const st = task.subTasks.find(s => s.id === id);
-          return st && st.completed;
-        });
-        reorderSubTasks(task.id, [...uncheckedIds, subtaskId, ...checkedIds]);
-      }
-    }, 150);
   };
 
   const completedSubtasks = task.subTasks.filter(st => st.completed).length;
@@ -338,7 +311,10 @@ export default function TaskDetails() {
                   style={{ backgroundColor: `${brickColor}18`, borderRadius: '10px' }}
                 >
                   <button
-                    onClick={() => handleSidebarToggleSub(subtask.id)}
+                    onClick={() => {
+                      playClickSound(subtask.completed ? 'uncheck' : 'check');
+                      toggleSubTask(task.id, subtask.id);
+                    }}
                     className={`shrink-0 w-5 h-5 flex items-center justify-center lego-stud ${subtask.completed ? 'checked' : 'unchecked'}`}
                     style={{
                       backgroundColor: subtask.completed ? brickColor : '#E5E7EB',
