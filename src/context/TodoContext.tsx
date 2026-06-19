@@ -36,6 +36,7 @@ interface TodoContextType {
   toggleSubTask: (taskId: string, subTaskId: string) => void;
   deleteSubTask: (taskId: string, subTaskId: string) => void;
   reorderSubTasks: (taskId: string, subTaskIds: string[]) => void;
+  updateSubTaskTitle: (taskId: string, subTaskId: string, title: string) => void;
   
   // Lists
   addList: (name: string, color: string) => void;
@@ -334,6 +335,16 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
     }));
   }, [setTasks]);
 
+  const updateSubTaskTitle = useCallback((taskId: string, subTaskId: string, title: string) => {
+    setTasks(prev => prev.map(t => {
+      if (t.id !== taskId) return t;
+      return {
+        ...t,
+        subTasks: t.subTasks.map(st => st.id === subTaskId ? { ...st, title } : st),
+      };
+    }));
+  }, [setTasks]);
+
   const addList = useCallback((name: string, color: string) => {
     const newList: TodoList = {
       id: uuidv4(),
@@ -378,6 +389,7 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
     toggleSubTask,
     deleteSubTask,
     reorderSubTasks,
+    updateSubTaskTitle,
     addList,
     deleteList,
     addTag,
@@ -395,7 +407,7 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
   }), [
     tasks, lists, tags, currentListId, selectedTaskId, theme, searchQuery, studTotal,
     addTask, updateTask, deleteTask, toggleTaskComplete, toggleMyDay, toggleImportant,
-    addSubTask, toggleSubTask, deleteSubTask, reorderSubTasks, addList, deleteList, addTag,
+    addSubTask, toggleSubTask, deleteSubTask, reorderSubTasks, updateSubTaskTitle, addList, deleteList, addTag,
     getFilteredTasks, getTaskById, getTasksByList, getOverdueCount, getTodayCount,
     getImportantCount, getPlannedCount, setCurrentListId, setSearchQuery, setTheme,
     incrementStudTotal, decrementStudTotal, getCompletedTasksCount,

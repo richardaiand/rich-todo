@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Plus, Sun, Star, Calendar, Home, MoreHorizontal, Trash2, Bell, Repeat, ChevronDown, ChevronUp, Pencil, GripVertical } from 'lucide-react';
+import { Plus, Sun, Star, Calendar, Home, MoreHorizontal, Trash2, Bell, Repeat, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
 import { useTodos } from '../context/TodoContext';
+import { playClickSound } from '../utils/sound';
 import { format, isToday, isTomorrow, parseISO, isPast } from 'date-fns';
 
 const LIST_ICONS: Record<string, React.ReactNode> = {
@@ -46,9 +47,7 @@ export default function TaskList() {
   const [subtaskInputs, setSubtaskInputs] = useState<Record<string, string>>({});
   const [showSubtaskInput, setShowSubtaskInput] = useState<Record<string, boolean>>({});
   const [counterPos, setCounterPos] = useState({ x: 0, y: 0 });
-  const [draggingStepId, setDraggingStepId] = useState<string | null>(null);
-  const [dragOverStepId, setDragOverStepId] = useState<string | null>(null);
-  const [breakStepId, setBreakStepId] = useState<string | null>(null);
+  const [snapStepId, setSnapStepId] = useState<string | null>(null);
   const studTimeoutRefs = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
 
   const currentList = lists.find(l => l.id === currentListId);
@@ -106,7 +105,6 @@ export default function TaskList() {
     const newStud: FloatingStud = {
       id, x: startX, y: startY, color, targetX, targetY,
     };
-
     setFloatingStuds(prev => [...prev, newStud]);
 
     const timeout = setTimeout(() => {
@@ -130,19 +128,43 @@ export default function TaskList() {
     toggleTaskComplete(taskId);
   };
 
+  // ---- AUTO-SORT STEPS ON TOGGLE ----
   const handleToggleSub = (taskId: string, subTaskId: string, e: React.MouseEvent) => {
     const target = e.currentTarget as HTMLElement;
     const rect = target.getBoundingClientRect();
     const task = tasks.find(t => t.id === taskId);
     const sub = task?.subTasks.find(s => s.id === subTaskId);
+    if (!task || !sub) return;
 
-    if (sub && !sub.completed) {
+    playClickSound(sub.completed ? 'uncheck' : 'check');
+    setSnapStepId(subTaskId);
+    setTimeout(() => setSnapStepId(null), 350);
+
+    if (!sub.completed) {
       spawnStudPopup(rect, '#0055BF');
     }
 
-    setBreakStepId(subTaskId);
-    setTimeout(() => setBreakStepId(null), 500);
+    // Toggle first
     toggleSubTask(taskId, subTaskId);
+
+    // Auto-sort after toggle
+    setTimeout(() => {
+      const refreshedTask = tasks.find(t => t.id === taskId);
+      if (!refreshedTask) return;
+      const t = refreshedTask.subTasks.find(s => s.id === subTaskId);
+      if (!t) return;
+
+      const others = refreshedTask.subTasks.filter(s => s.id !== subTaskId);
+      if (t.completed) {
+        // Checked: move to bottom (after all unchecked and all other checked)
+        reorderSubTasks(taskId, [...others.map(s => s.id), subTaskId]);
+      } else {
+        // Unchecked: move to bottom of unchecked section
+        const uncheckedIds = others.filter(s => !s.completed).map(s => s.id);
+        const checkedIds = others.filter(s => s.completed).map(s => s.id);
+        reorderSubTasks(taskId, [...uncheckedIds, subTaskId, ...checkedIds]);
+      }
+    }, 150);
   };
 
   const toggleExpand = (taskId: string) => {
@@ -156,52 +178,6 @@ export default function TaskList() {
       setSubtaskInputs(prev => ({ ...prev, [taskId]: '' }));
       setShowSubtaskInput(prev => ({ ...prev, [taskId]: false }));
     }
-  };
-
-  // ---- FIXED DRAG AND DROP ----
-  const handleDragStart = (e: React.DragEvent, stepId: string) => {
-    setDraggingStepId(stepId);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', stepId);
-  };
-
-  const handleDragOver = (e: React.DragEvent, stepId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    e.dataTransfer.dropEffect = 'move';
-    if (dragOverStepId !== stepId) setDragOverStepId(stepId);
-  };
-
-  const handleDragLeave = () => {
-    setDragOverStepId(null);
-  };
-
-  const handleDrop = (e: React.DragEvent, taskId: string, targetStepId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const sourceStepId = e.dataTransfer.getData('text/plain');
-    setDraggingStepId(null);
-    setDragOverStepId(null);
-
-    if (!sourceStepId || sourceStepId === targetStepId) return;
-
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
-
-    const fromIndex = task.subTasks.findIndex(s => s.id === sourceStepId);
-    const toIndex = task.subTasks.findIndex(s => s.id === targetStepId);
-    if (fromIndex === -1 || toIndex === -1) return;
-
-    const newSubTasks = [...task.subTasks];
-    const [moved] = newSubTasks.splice(fromIndex, 1);
-    newSubTasks.splice(toIndex, 0, moved);
-
-    reorderSubTasks(taskId, newSubTasks.map(s => s.id));
-  };
-
-  const handleDragEnd = () => {
-    setDraggingStepId(null);
-    setDragOverStepId(null);
   };
 
   return (
@@ -439,43 +415,26 @@ export default function TaskList() {
                       </span>
                     </div>
 
-                    {/* All Steps - Each is a Lego brick */}
+                    {/* Steps - All are Lego bricks */}
                     <div className="space-y-2 pt-1">
                       {task.subTasks.map((subtask, index) => {
-                        const isDragging = draggingStepId === subtask.id;
-                        const isDragOver = dragOverStepId === subtask.id;
-                        const isBreaking = breakStepId === subtask.id;
+                        const isSnapping = snapStepId === subtask.id;
                         const brickColor = SUBTASK_COLORS[index % SUBTASK_COLORS.length];
                         const isCompleted = subtask.completed;
 
                         return (
                           <div
                             key={subtask.id}
-                            draggable={!isCompleted}
-                            onDragStart={(e) => handleDragStart(e, subtask.id)}
-                            onDragOver={(e) => handleDragOver(e, subtask.id)}
-                            onDragLeave={handleDragLeave}
-                            onDrop={(e) => handleDrop(e, task.id, subtask.id)}
-                            onDragEnd={handleDragEnd}
-                            className={`step-brick-row flex items-center gap-2 px-3 py-2 relative group
+                            className={`step-brick-row flex items-center gap-2 px-3 py-2 relative
                               ${isCompleted ? 'step-brick-checked' : ''}
-                              ${isBreaking ? 'step-brick-break' : ''}
-                              ${isDragOver ? 'step-drag-target' : ''}
-                              ${isDragging ? 'step-dragging' : ''}`}
+                              ${isSnapping ? 'step-connect-snap' : ''}`}
                             style={{
                               backgroundColor: isCompleted ? `${brickColor}30` : brickColor,
                               boxShadow: isCompleted ? 'none' : `0 2px 0 ${brickColor}80, 0 3px 4px rgba(0,0,0,0.1)`,
                               opacity: isCompleted ? 0.7 : 1,
+                              transition: isSnapping ? 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)' : undefined,
                             }}
                           >
-                            {/* Drag Handle (unchecked only) */}
-                            {!isCompleted && (
-                              <div className="step-drag-handle flex items-center justify-center w-4 h-4">
-                                <GripVertical size={12} color="rgba(255,255,255,0.7)" />
-                              </div>
-                            )}
-                            {isCompleted && <div className="w-4 h-4" />}
-
                             {/* Stud checkbox */}
                             <button
                               onClick={(e) => handleToggleSub(task.id, subtask.id, e)}

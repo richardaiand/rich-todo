@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, Star, Sun, Plus, Trash2, Hash } from 'lucide-react';
+import { Pencil, X, Star, Sun, Plus, Trash2, Hash } from 'lucide-react';
 import { useTodos } from '../context/TodoContext';
 import { Priority, Recurrence, Task } from '../types';
 import { format, parseISO } from 'date-fns';
@@ -23,7 +23,7 @@ export default function TaskDetails() {
   const {
     selectedTaskId, setSelectedTaskId, getTaskById,
     updateTask, toggleTaskComplete, toggleMyDay, toggleImportant,
-    deleteTask, addSubTask, toggleSubTask, deleteSubTask,
+    deleteTask, addSubTask, toggleSubTask, deleteSubTask, updateSubTaskTitle,
     tags, addTag, theme,
   } = useTodos();
 
@@ -32,6 +32,8 @@ export default function TaskDetails() {
   const [showAddTag, setShowAddTag] = useState(false);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [showAddSubtask, setShowAddSubtask] = useState(false);
+  const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null);
+  const [editingSubtaskTitle, setEditingSubtaskTitle] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -319,15 +321,73 @@ export default function TaskDetails() {
                     </svg>
                   )}
                 </button>
-                <span
-                  className="flex-1 text-sm transition-all"
-                  style={{
-                    color: subtask.completed ? theme.textSecondary : theme.text,
-                    textDecoration: subtask.completed ? 'line-through' : 'none',
-                  }}
-                >
-                  {subtask.title}
-                </span>
+                {editingSubtaskId === subtask.id ? (
+                  <div className="flex-1 flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={editingSubtaskTitle}
+                      onChange={(e) => setEditingSubtaskTitle(e.target.value)}
+                      onBlur={() => {
+                        if (editingSubtaskTitle.trim()) {
+                          updateSubTaskTitle(task.id, subtask.id, editingSubtaskTitle.trim());
+                        }
+                        setEditingSubtaskId(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          if (editingSubtaskTitle.trim()) {
+                            updateSubTaskTitle(task.id, subtask.id, editingSubtaskTitle.trim());
+                          }
+                          setEditingSubtaskId(null);
+                        }
+                        if (e.key === 'Escape') {
+                          setEditingSubtaskId(null);
+                        }
+                      }}
+                      className="flex-1 text-sm outline-none bg-transparent border-b px-1 py-0.5"
+                      style={{ borderColor: theme.accent, color: theme.text }}
+                      autoFocus
+                    />
+                    <button
+                      onClick={() => {
+                        if (editingSubtaskTitle.trim()) {
+                          updateSubTaskTitle(task.id, subtask.id, editingSubtaskTitle.trim());
+                        }
+                        setEditingSubtaskId(null);
+                      }}
+                      className="btn-icon w-5 h-5 rounded"
+                      style={{ color: theme.accent }}
+                    >
+                      <Pencil size={10} />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <span
+                      className="flex-1 text-sm transition-all cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 px-1 py-0.5 rounded"
+                      style={{
+                        color: subtask.completed ? theme.textSecondary : theme.text,
+                        textDecoration: subtask.completed ? 'line-through' : 'none',
+                      }}
+                      onClick={() => {
+                        setEditingSubtaskId(subtask.id);
+                        setEditingSubtaskTitle(subtask.title);
+                      }}
+                    >
+                      {subtask.title}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setEditingSubtaskId(subtask.id);
+                        setEditingSubtaskTitle(subtask.title);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 btn-icon w-5 h-5 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-opacity"
+                      style={{ color: theme.textSecondary }}
+                    >
+                      <Pencil size={10} />
+                    </button>
+                  </>
+                )}
                 <button
                   onClick={() => deleteSubTask(task.id, subtask.id)}
                   className="opacity-0 group-hover:opacity-100 btn-icon w-6 h-6 rounded hover:bg-red-500/10 transition-opacity"
