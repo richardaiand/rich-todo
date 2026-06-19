@@ -65,7 +65,7 @@
   opacity: 0.5;
 }
 
-/* ===== LEGO STUD POPUP / FLOAT TO COUNTER ANIMATION ===== */
+/* ===== LEGO STUD FLY TO COUNTER ===== */
 .stud-popup {
   position: fixed;
   width: 20px;
@@ -94,15 +94,15 @@
   }
   20% {
     opacity: 1;
-    transform: translate(calc(var(--mid-x) * 0.3), calc(var(--mid-y) * 0.3)) scale(1.2);
+    transform: translate(var(--mid-x, 10px), var(--mid-y, -40px)) scale(1.2);
   }
   70% {
     opacity: 0.9;
-    transform: translate(calc(var(--target-x) * 0.8), calc(var(--target-y) * 0.8)) scale(0.8);
+    transform: translate(var(--target-x, 200px), var(--target-y, -300px)) scale(0.8);
   }
   100% {
     opacity: 0;
-    transform: translate(var(--target-x), var(--target-y)) scale(0.3);
+    transform: translate(var(--target-x, 200px), var(--target-y, -300px)) scale(0.3);
   }
 }
 
@@ -122,7 +122,7 @@
   position: relative;
   border-radius: 4px;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 
+  box-shadow:
     0 2px 0 rgba(0,0,0,0.15),
     0 3px 4px rgba(0,0,0,0.1),
     inset 0 1px 0 rgba(255,255,255,0.15);
@@ -138,7 +138,7 @@
   height: 5px;
   border-radius: 3px 3px 0 0;
   background: inherit;
-  box-shadow: 
+  box-shadow:
     14px 0 0 inherit,
     28px 0 0 inherit;
   filter: brightness(0.85);
@@ -146,7 +146,7 @@
 
 .sidebar-brick:hover {
   transform: translateY(-1px);
-  box-shadow: 
+  box-shadow:
     0 3px 0 rgba(0,0,0,0.15),
     0 5px 8px rgba(0,0,0,0.12),
     inset 0 1px 0 rgba(255,255,255,0.15);
@@ -154,161 +154,86 @@
 
 .sidebar-brick:active {
   transform: translateY(0);
-  box-shadow: 
+  box-shadow:
     0 1px 0 rgba(0,0,0,0.15),
     0 2px 3px rgba(0,0,0,0.1),
     inset 0 1px 0 rgba(255,255,255,0.15);
 }
 
 .sidebar-brick-active {
-  box-shadow: 
+  box-shadow:
     0 2px 0 rgba(0,0,0,0.2),
     0 3px 6px rgba(0,0,0,0.15),
     inset 0 1px 0 rgba(255,255,255,0.25);
   transform: translateX(3px);
 }
 
-/* ===== STEP BRICK ANIMATIONS ===== */
+/* ===== STEP BRICK ROW ===== */
 .step-brick-row {
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.step-brick-checked {
-  animation: stepToBrick 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-
-.step-brick-unchecked {
-  animation: brickToStep 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-
-@keyframes stepToBrick {
-  0% { 
-    transform: scale(1) translateX(0);
-    border-radius: 8px;
-  }
-  50% {
-    transform: scale(0.95) translateX(4px);
-    border-radius: 6px;
-  }
-  100% { 
-    transform: scale(1) translateX(0);
-    border-radius: 4px;
-    box-shadow: 0 2px 0 rgba(0,0,0,0.1), 0 3px 4px rgba(0,0,0,0.08);
-  }
-}
-
-@keyframes brickToStep {
-  0% { 
-    transform: scale(1) translateX(0);
-    border-radius: 4px;
-  }
-  50% {
-    transform: scale(0.97) translateX(-2px);
-  }
-  100% { 
-    transform: scale(1) translateX(0);
-    border-radius: 8px;
-  }
-}
-
-/* ===== BRICK STACK ===== */
-.brick-stack-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px;
-  padding: 6px;
-  border-radius: 6px;
-  min-height: 28px;
-  transition: all 0.3s ease;
-}
-
-.brick-stack-item {
-  height: 20px;
-  border-radius: 3px;
   position: relative;
-  animation: brickStackIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
-  flex-shrink: 0;
+  border-radius: 6px;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.1), 0 3px 4px rgba(0,0,0,0.06);
+  margin-top: 6px;
+  cursor: default;
 }
 
-.brick-stack-item::before {
+.step-brick-row:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 0 rgba(0,0,0,0.12), 0 5px 8px rgba(0,0,0,0.08);
+}
+
+/* Stud bumps on top of step brick */
+.step-brick-row::before {
   content: '';
   position: absolute;
-  top: -3px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: -4px;
+  left: 24px;
   width: 8px;
   height: 4px;
   border-radius: 2px 2px 0 0;
   background: inherit;
-  filter: brightness(0.9);
+  filter: brightness(1.15);
+  box-shadow:
+    14px 0 0 inherit,
+    28px 0 0 inherit;
 }
 
-@keyframes brickStackIn {
-  0% {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.5);
-  }
-  60% {
-    opacity: 1;
-    transform: translateY(2px) scale(1.05);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+/* When checked/broken */
+.step-brick-checked {
+  opacity: 0.7;
+  box-shadow: none !important;
+  transform: scale(0.98) translateY(1px);
 }
 
-.brick-stack-out {
-  animation: brickStackOut 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+.step-brick-break {
+  animation: stepBreakOff 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-@keyframes brickStackOut {
-  0% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(0.5) translateY(-10px);
-  }
-}
-
-/* Break apart and reappear */
-.stack-break {
-  animation: stackBreak 0.6s ease-in-out;
-}
-
-@keyframes stackBreak {
-  0% { transform: scale(1); }
-  30% { transform: scale(1.05) rotate(1deg); }
-  50% { transform: scale(0.95) rotate(-1deg); }
-  70% { transform: scale(1.02) rotate(0.5deg); }
-  100% { transform: scale(1) rotate(0deg); }
-}
-
-.stack-reappear {
-  animation: stackReappear 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes stackReappear {
-  0% { opacity: 0; transform: scale(0.8); }
-  60% { opacity: 1; transform: scale(1.03); }
-  100% { opacity: 1; transform: scale(1); }
+@keyframes stepBreakOff {
+  0% { transform: translateY(0) rotate(0deg); }
+  15% { transform: translateY(-3px) rotate(-2deg); }
+  30% { transform: translateY(1px) rotate(2deg); }
+  45% { transform: translateY(-2px) rotate(-1deg); }
+  60% { transform: translateY(0) rotate(1deg); }
+  80% { transform: translateY(-1px) rotate(0deg); opacity: 0.85; }
+  100% { transform: translateY(0) rotate(0deg); opacity: 0.7; }
 }
 
 /* ===== DRAG REORDER - BRICK PICK UP ===== */
 .step-dragging {
   opacity: 0.9;
-  transform: rotate(3deg) scale(1.02) translateY(-2px);
+  transform: rotate(2deg) scale(1.03) translateY(-2px) !important;
   cursor: grabbing;
   box-shadow: 0 8px 16px rgba(0,0,0,0.15) !important;
   z-index: 10;
 }
 
-.step-drag-over {
-  border-top: 2px dashed #0055BF;
-  padding-top: 2px;
+.step-drag-target {
+  border: 2px dashed rgba(0,85,191,0.6);
+  background: rgba(0,85,191,0.05);
+  transform: scale(1.02);
+  box-shadow: inset 0 0 0 2px rgba(0,85,191,0.1);
 }
 
 .step-drag-handle {
@@ -318,7 +243,7 @@
 }
 
 .step-drag-handle:hover {
-  opacity: 0.7;
+  opacity: 0.8;
 }
 
 .step-drag-handle:active {
@@ -339,17 +264,14 @@
   50% { transform: translateY(-2px) rotate(5deg); }
 }
 
-/* ===== LEGO THEME STYLES ===== */
-
-/* Lego stud checkbox */
+/* ===== LEGO STUD CHECKBOX ===== */
 .lego-stud {
   position: relative;
   border-radius: 50% !important;
-  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), 
-              background-color 0.2s ease, 
-              border-color 0.2s ease,
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1),
+              background-color 0.2s ease,
               box-shadow 0.2s ease;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.15), 
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.15),
               0 1px 2px rgba(0,0,0,0.1);
   border-width: 0 !important;
   flex-shrink: 0;
@@ -373,7 +295,7 @@
 
 .lego-stud.checked {
   animation: legoSnap 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: inset 0 2px 6px rgba(0,0,0,0.25), 
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.25),
               0 2px 4px rgba(0,0,0,0.15);
 }
 
@@ -381,24 +303,24 @@
   animation: legoPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Lego brick card styling */
+/* ===== LEGO BRICK CARD ===== */
 .lego-brick {
   position: relative;
   transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
               box-shadow 0.2s ease;
-  box-shadow: 0 2px 0 rgba(0,0,0,0.08), 
+  box-shadow: 0 2px 0 rgba(0,0,0,0.08),
               0 4px 6px rgba(0,0,0,0.05);
 }
 
 .lego-brick:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 0 rgba(0,0,0,0.08), 
+  box-shadow: 0 4px 0 rgba(0,0,0,0.08),
               0 6px 12px rgba(0,0,0,0.08);
 }
 
 .lego-brick:active {
   transform: translateY(0);
-  box-shadow: 0 1px 0 rgba(0,0,0,0.08), 
+  box-shadow: 0 1px 0 rgba(0,0,0,0.08),
               0 2px 4px rgba(0,0,0,0.05);
 }
 
@@ -413,17 +335,16 @@
 }
 
 .task-dropdown.open {
-  max-height: 600px;
+  max-height: 800px;
   opacity: 1;
 }
 
-/* Completed task brick animation */
+/* Completed task animation */
 .lego-brick-complete {
   animation: brickSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* ===== KEYFRAMES ===== */
-
 @keyframes legoSnap {
   0% { transform: scale(1); }
   30% { transform: scale(0.6); }
@@ -439,35 +360,34 @@
 }
 
 @keyframes brickSlideIn {
-  0% { 
-    opacity: 0; 
-    transform: translateX(-20px) scale(0.95); 
+  0% {
+    opacity: 0;
+    transform: translateX(-20px) scale(0.95);
   }
-  60% { 
-    opacity: 1; 
-    transform: translateX(4px) scale(1.01); 
+  60% {
+    opacity: 1;
+    transform: translateX(4px) scale(1.01);
   }
-  100% { 
-    opacity: 0.6; 
-    transform: translateX(0) scale(1); 
+  100% {
+    opacity: 0.6;
+    transform: translateX(0) scale(1);
   }
 }
 
 @keyframes brickAppear {
-  0% { 
-    opacity: 0; 
-    transform: translateY(10px) scale(0.95); 
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
   }
-  60% { 
-    transform: translateY(-2px) scale(1.01); 
+  60% {
+    transform: translateY(-2px) scale(1.01);
   }
-  100% { 
-    opacity: 1; 
-    transform: translateY(0) scale(1); 
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
-/* Apply appear animation to new tasks */
 .task-appear {
   animation: brickAppear 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
