@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Pencil, X, Star, Sun, Plus, Trash2, Hash } from 'lucide-react';
 import { useTodos } from '../context/TodoContext';
+import { playClickSound } from '../utils/sound';
 import { Priority, Recurrence, Task } from '../types';
 import { format, parseISO } from 'date-fns';
 
@@ -19,11 +20,13 @@ const RECURRENCE_OPTIONS: { value: Recurrence; label: string }[] = [
   { value: 'yearly', label: 'Yearly' },
 ];
 
+const SUBTASK_COLORS = ['#C91A09', '#0055BF', '#237841', '#FFC107', '#8764b8', '#d83b01', '#00b7c3'];
+
 export default function TaskDetails() {
   const {
     selectedTaskId, setSelectedTaskId, getTaskById,
     updateTask, toggleTaskComplete, toggleMyDay, toggleImportant,
-    deleteTask, addSubTask, toggleSubTask, deleteSubTask, updateSubTaskTitle,
+    deleteTask, addSubTask, toggleSubTask, deleteSubTask, updateSubTaskTitle, reorderSubTasks,
     tags, addTag, theme,
   } = useTodos();
 
@@ -74,6 +77,33 @@ export default function TaskDetails() {
       setNewSubtaskTitle('');
       setShowAddSubtask(false);
     }
+  };
+
+  const handleSidebarToggleSub = (subtaskId: string) => {
+    const sub = task.subTasks.find(s => s.id === subtaskId);
+    if (!sub) return;
+    playClickSound(sub.completed ? 'uncheck' : 'check');
+    const wasCompleted = sub.completed;
+    toggleSubTask(task.id, subtaskId);
+    setTimeout(() => {
+      const currentOrder = task.subTasks.map(s => s.id);
+      const others = currentOrder.filter(id => id !== subtaskId);
+      if (!wasCompleted) {
+        // Now checked → bottom
+        reorderSubTasks(task.id, [...others, subtaskId]);
+      } else {
+        // Now unchecked → bottom of unchecked
+        const uncheckedIds = others.filter(id => {
+          const st = task.subTasks.find(s => s.id === id);
+          return st && !st.completed;
+        });
+        const checkedIds = others.filter(id => {
+          const st = task.subTasks.find(s => s.id === id);
+          return st && st.completed;
+        });
+        reorderSubTasks(task.id, [...uncheckedIds, subtaskId, ...checkedIds]);
+      }
+    }, 150);
   };
 
   const completedSubtasks = task.subTasks.filter(st => st.completed).length;
@@ -299,22 +329,24 @@ export default function TaskDetails() {
             </span>
           </div>
           <div className="space-y-1">
-            {task.subTasks.map(subtask => (
-              <div
-                key={subtask.id}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl group lego-brick"
-                style={{ backgroundColor: theme.bg, borderRadius: '10px' }}
-              >
-                <button
-                  onClick={() => toggleSubTask(task.id, subtask.id)}
-                  className={`shrink-0 w-5 h-5 flex items-center justify-center lego-stud ${subtask.completed ? 'checked' : 'unchecked'}`}
-                  style={{
-                    backgroundColor: subtask.completed ? '#C91A09' : '#E5E7EB',
-                    boxShadow: subtask.completed
-                      ? 'inset 0 2px 4px rgba(0,0,0,0.3), 0 2px 4px rgba(201,26,9,0.3)'
-                      : 'inset 0 2px 4px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08)',
-                  }}
+            {task.subTasks.map((subtask, index) => {
+              const brickColor = SUBTASK_COLORS[index % SUBTASK_COLORS.length];
+              return (
+                <div
+                  key={subtask.id}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl group lego-brick step-brick-row ${subtask.completed ? 'step-brick-checked' : ''}`}
+                  style={{ backgroundColor: `${brickColor}18`, borderRadius: '10px' }}
                 >
+                  <button
+                    onClick={() => handleSidebarToggleSub(subtask.id)}
+                    className={`shrink-0 w-5 h-5 flex items-center justify-center lego-stud ${subtask.completed ? 'checked' : 'unchecked'}`}
+                    style={{
+                      backgroundColor: subtask.completed ? brickColor : '#E5E7EB',
+                      boxShadow: subtask.completed
+                        ? `inset 0 2px 4px rgba(0,0,0,0.3), 0 2px 4px ${brickColor}50`
+                        : 'inset 0 2px 4px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08)',
+                    }}
+                  >
                   {subtask.completed && (
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="20 6 9 17 4 12" />
@@ -388,15 +420,16 @@ export default function TaskDetails() {
                     </button>
                   </>
                 )}
-                <button
-                  onClick={() => deleteSubTask(task.id, subtask.id)}
-                  className="opacity-0 group-hover:opacity-100 btn-icon w-6 h-6 rounded hover:bg-red-500/10 transition-opacity"
-                  style={{ color: '#d83b01' }}
-                >
-                  <Trash2 size={12} />
-                </button>
-              </div>
-            ))}
+                  <button
+                    onClick={() => deleteSubTask(task.id, subtask.id)}
+                    className="opacity-0 group-hover:opacity-100 btn-icon w-6 h-6 rounded hover:bg-red-500/10 transition-opacity"
+                    style={{ color: '#d83b01' }}
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              );
+            })}
           </div>
           {showAddSubtask ? (
             <div className="flex gap-2">

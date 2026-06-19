@@ -35,7 +35,7 @@ export default function TaskList() {
   const { 
     tasks, lists, tags, currentListId, selectedTaskId, setSelectedTaskId,
     addTask, deleteTask, toggleTaskComplete, toggleMyDay, toggleImportant,
-    addSubTask, toggleSubTask, deleteSubTask, reorderSubTasks,
+    addSubTask, toggleSubTask, deleteSubTask, reorderSubTasks, updateSubTaskTitle,
     getFilteredTasks, theme, incrementStudTotal, decrementStudTotal
   } = useTodos();
 
@@ -48,6 +48,8 @@ export default function TaskList() {
   const [showSubtaskInput, setShowSubtaskInput] = useState<Record<string, boolean>>({});
   const [counterPos, setCounterPos] = useState({ x: 0, y: 0 });
   const [snapStepId, setSnapStepId] = useState<string | null>(null);
+  const [editingInlineStepId, setEditingInlineStepId] = useState<string | null>(null);
+  const [editingInlineStepTitle, setEditingInlineStepTitle] = useState('');
   const studTimeoutRefs = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
 
   const currentList = lists.find(l => l.id === currentListId);
@@ -144,24 +146,28 @@ export default function TaskList() {
       spawnStudPopup(rect, '#0055BF');
     }
 
+    const wasCompleted = sub.completed;
+
     // Toggle first
     toggleSubTask(taskId, subTaskId);
 
     // Auto-sort after toggle
     setTimeout(() => {
-      const refreshedTask = tasks.find(t => t.id === taskId);
-      if (!refreshedTask) return;
-      const t = refreshedTask.subTasks.find(s => s.id === subTaskId);
-      if (!t) return;
-
-      const others = refreshedTask.subTasks.filter(s => s.id !== subTaskId);
-      if (t.completed) {
-        // Checked: move to bottom (after all unchecked and all other checked)
-        reorderSubTasks(taskId, [...others.map(s => s.id), subTaskId]);
+      const currentOrder = task.subTasks.map(s => s.id);
+      const others = currentOrder.filter(id => id !== subTaskId);
+      if (!wasCompleted) {
+        // Was unchecked, now checked → move to bottom
+        reorderSubTasks(taskId, [...others, subTaskId]);
       } else {
-        // Unchecked: move to bottom of unchecked section
-        const uncheckedIds = others.filter(s => !s.completed).map(s => s.id);
-        const checkedIds = others.filter(s => s.completed).map(s => s.id);
+        // Was checked, now unchecked → bottom of unchecked section
+        const uncheckedIds = others.filter(id => {
+          const st = task.subTasks.find(s => s.id === id);
+          return st && !st.completed;
+        });
+        const checkedIds = others.filter(id => {
+          const st = task.subTasks.find(s => s.id === id);
+          return st && st.completed;
+        });
         reorderSubTasks(taskId, [...uncheckedIds, subTaskId, ...checkedIds]);
       }
     }, 150);
@@ -425,7 +431,7 @@ export default function TaskList() {
                         return (
                           <div
                             key={subtask.id}
-                            className={`step-brick-row flex items-center gap-2 px-3 py-2 relative
+                            className={`step-brick-row group flex items-center gap-2 px-3 py-2 relative
                               ${isCompleted ? 'step-brick-checked' : ''}
                               ${isSnapping ? 'step-connect-snap' : ''}`}
                             style={{
@@ -440,30 +446,62 @@ export default function TaskList() {
                               onClick={(e) => handleToggleSub(task.id, subtask.id, e)}
                               className={`shrink-0 w-5 h-5 flex items-center justify-center lego-stud ${subtask.completed ? 'checked' : 'unchecked'}`}
                               style={{
-                                backgroundColor: subtask.completed ? '#ffffff' : 'rgba(255,255,255,0.85)',
+                                backgroundColor: subtask.completed ? brickColor : 'rgba(255,255,255,0.85)',
                                 boxShadow: subtask.completed
-                                  ? 'inset 0 2px 4px rgba(0,0,0,0.2), 0 1px 2px rgba(0,0,0,0.15)'
+                                  ? `inset 0 2px 4px rgba(0,0,0,0.2), 0 1px 2px rgba(0,0,0,0.15)`
                                   : 'inset 0 2px 4px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.1)',
                               }}
                             >
                               {subtask.completed && (
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={brickColor} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
                                   <polyline points="20 6 9 17 4 12" />
                                 </svg>
                               )}
                             </button>
 
                             {/* Title */}
-                            <span
-                              className="flex-1 text-sm font-medium truncate"
-                              style={{
-                                color: isCompleted ? theme.textSecondary : '#fff',
-                                textDecoration: isCompleted ? 'line-through' : 'none',
-                                textShadow: !isCompleted ? '0 1px 2px rgba(0,0,0,0.3)' : 'none',
-                              }}
-                            >
-                              {subtask.title}
-                            </span>
+                            {editingInlineStepId === subtask.id ? (
+                              <input
+                                type="text"
+                                value={editingInlineStepTitle}
+                                onChange={(e) => setEditingInlineStepTitle(e.target.value)}
+                                onBlur={() => {
+                                  if (editingInlineStepTitle.trim() && editingInlineStepTitle.trim() !== subtask.title) {
+                                    updateSubTaskTitle(task.id, subtask.id, editingInlineStepTitle.trim());
+                                  }
+                                  setEditingInlineStepId(null);
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    if (editingInlineStepTitle.trim() && editingInlineStepTitle.trim() !== subtask.title) {
+                                      updateSubTaskTitle(task.id, subtask.id, editingInlineStepTitle.trim());
+                                    }
+                                    setEditingInlineStepId(null);
+                                  }
+                                  if (e.key === 'Escape') {
+                                    setEditingInlineStepId(null);
+                                  }
+                                }}
+                                className="flex-1 text-sm font-medium outline-none bg-transparent border-b px-1 py-0.5"
+                                style={{ borderColor: brickColor, color: '#fff' }}
+                                autoFocus
+                              />
+                            ) : (
+                              <span
+                                className="flex-1 text-sm font-medium truncate cursor-pointer hover:opacity-80"
+                                style={{
+                                  color: isCompleted ? (theme.textSecondary) : '#fff',
+                                  textDecoration: isCompleted ? 'line-through' : 'none',
+                                  textShadow: !isCompleted ? '0 1px 2px rgba(0,0,0,0.3)' : 'none',
+                                }}
+                                onClick={() => {
+                                  setEditingInlineStepId(subtask.id);
+                                  setEditingInlineStepTitle(subtask.title);
+                                }}
+                              >
+                                {subtask.title}
+                              </span>
+                            )}
 
                             <button
                               onClick={() => deleteSubTask(task.id, subtask.id)}
