@@ -334,8 +334,7 @@ export default function TaskList() {
             const isEditing = selectedTaskId === task.id;
             const isBreaking = breakingTaskId === task.id;
 
-            const incompleteSteps = task.subTasks.filter(st => !st.completed);
-            const completeSteps = task.subTasks.filter(st => st.completed);
+            const completedSteps = task.subTasks.filter(st => st.completed);
 
             return (
               <div key={task.id} className="task-appear">
@@ -516,13 +515,13 @@ export default function TaskList() {
                     </div>
 
                     {/* Brick Stack - Completed Steps shown as bricks */}
-                    {completeSteps.length > 0 && (
+                    {completedSteps.length > 0 && (
                       <div 
                         className={`brick-stack-container ${isBreaking ? 'stack-break' : ''}`}
                         style={{ backgroundColor: theme.card }}
                         key={isBreaking ? 'breaking' : 'stable'}
                       >
-                        {completeSteps.map((subtask, idx) => (
+                        {completedSteps.map((subtask, idx) => (
                           <div
                             key={subtask.id}
                             className="brick-stack-item stack-reappear"
@@ -536,9 +535,9 @@ export default function TaskList() {
                       </div>
                     )}
 
-                    {/* Incomplete Step List - Drag to reorder */}
+                    {/* Step List - All steps with checkboxes for toggling */}
                     <div className="space-y-1">
-                      {incompleteSteps.map((subtask, index) => {
+                      {task.subTasks.map((subtask, index) => {
                         const isDragOver = dragOverTaskId === task.id && dragOverIndex === index;
                         const isDragging = draggingStepId === subtask.id;
                         const color = SUBTASK_COLORS[index % SUBTASK_COLORS.length];
