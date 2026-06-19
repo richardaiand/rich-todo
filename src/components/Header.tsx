@@ -65,7 +65,7 @@ export default function Header({ onOpenTheme }: HeaderProps) {
       <div className="flex items-center gap-2">
         {/* Stud Total Counter */}
         <div 
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold stud-total-pop"
+          className="stud-counter-target flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold stud-total-pop"
           style={{ 
             backgroundColor: '#C91A09',
             color: 'white',

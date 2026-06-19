@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback } from 'react';
-import { Plus, Sun, Star, Calendar, Home, MoreHorizontal, Trash2, Bell, Repeat, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { Plus, Sun, Star, Calendar, Home, MoreHorizontal, Trash2, Bell, Repeat, ChevronDown, ChevronUp, Pencil, GripVertical } from 'lucide-react';
 import { useTodos } from '../context/TodoContext';
 import { format, isToday, isTomorrow, parseISO, isPast } from 'date-fns';
 
@@ -17,14 +17,14 @@ const LIST_GRADIENTS: Record<string, string> = {
   'all': 'linear-gradient(135deg, #237841 0%, #4CAF50 100%)',
 };
 
-// Floating stud animation element
+const SUBTASK_COLORS = ['#C91A09', '#0055BF', '#237841', '#FFC107', '#8764b8', '#d83b01', '#00b7c3'];
+
 interface FloatingStud {
   id: number;
   x: number;
   y: number;
   color: string;
-  tx: number;
-  tx2: number;
+  targetX: number;
   targetY: number;
 }
 
@@ -34,8 +34,8 @@ export default function TaskList() {
   const { 
     tasks, lists, tags, currentListId, selectedTaskId, setSelectedTaskId,
     addTask, deleteTask, toggleTaskComplete, toggleMyDay, toggleImportant,
-    addSubTask, toggleSubTask, deleteSubTask,
-    getFilteredTasks, theme, incrementStudTotal
+    addSubTask, toggleSubTask, deleteSubTask, reorderSubTasks,
+    getFilteredTasks, theme, incrementStudTotal, decrementStudTotal
   } = useTodos();
 
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -46,6 +46,24 @@ export default function TaskList() {
   const [subtaskInputs, setSubtaskInputs] = useState<Record<string, string>>({});
   const [showSubtaskInput, setShowSubtaskInput] = useState<Record<string, boolean>>({});
   const studTimeoutRefs = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
+  const [counterPos, setCounterPos] = useState({ x: 0, y: 0 });
+  const [breakingTaskId, setBreakingTaskId] = useState<string | null>(null);
+  const [draggingStepId, setDraggingStepId] = useState<string | null>(null);
+  const [dragOverTaskId, setDragOverTaskId] = useState<string | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    const updateCounterPos = () => {
+      const el = document.querySelector('.stud-counter-target');
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        setCounterPos({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+      }
+    };
+    updateCounterPos();
+    window.addEventListener('resize', updateCounterPos);
+    return () => window.removeEventListener('resize', updateCounterPos);
+  }, []);
 
   const currentList = lists.find(l => l.id === currentListId);
   const filteredTasks = getFilteredTasks();
@@ -68,10 +86,10 @@ export default function TaskList() {
   const getDueDateLabel = (dueDate?: string) => {
     if (!dueDate) return null;
     const date = parseISO(dueDate);
-    if (isToday(date)) return { text: 'Today', color: theme.accent };
-    if (isTomorrow(date)) return { text: 'Tomorrow', color: theme.accent };
-    if (isPast(date) && !isToday(date)) return { text: format(date, 'MMM d'), color: '#d83b01' };
-    return { text: format(date, 'MMM d'), color: theme.textSecondary };
+    if (isToday(date)) return { text: 'Today', color: theme.accent, overdue: false };
+    if (isTomorrow(date)) return { text: 'Tomorrow', color: theme.accent, overdue: false };
+    if (isPast(date) && !isToday(date)) return { text: format(date, 'MMM d'), color: '#d83b01', overdue: true };
+    return { text: format(date, 'MMM d'), color: theme.textSecondary, overdue: false };
   };
 
   const sortedTasks = [...filteredTasks].sort((a, b) => {
@@ -79,38 +97,36 @@ export default function TaskList() {
     return (a.order || 0) - (b.order || 0);
   });
 
-  // Create floating stud popup animation
   const spawnStudPopup = useCallback((rect: DOMRect, color: string = '#C91A09') => {
     const id = ++studIdCounter;
-    // Random drift direction
-    const tx = 10 + Math.random() * 40;
-    const tx2 = -20 + Math.random() * 40;
-    const targetY = -(window.innerHeight * 0.4 + Math.random() * 100);
-    
+    const startX = rect.left + rect.width / 2 - 10;
+    const startY = rect.top + rect.height / 2 - 10;
+    const targetX = counterPos.x - startX;
+    const targetY = counterPos.y - startY;
+
     const newStud: FloatingStud = {
-      id, x: rect.left + rect.width / 2 - 10, y: rect.top + rect.height / 2 - 10,
-      color, tx, tx2, targetY,
+      id, x: startX, y: startY, color, targetX, targetY,
     };
-    
+
     setFloatingStuds(prev => [...prev, newStud]);
-    incrementStudTotal();
-    
-    // Clean up after animation
+
     const timeout = setTimeout(() => {
       setFloatingStuds(prev => prev.filter(s => s.id !== id));
       delete studTimeoutRefs.current[id];
-    }, 1300);
+    }, 1050);
     studTimeoutRefs.current[id] = timeout;
-  }, [incrementStudTotal]);
+  }, [counterPos]);
 
   const handleToggleComplete = (taskId: string, e: React.MouseEvent | React.MouseEvent<HTMLButtonElement>) => {
     const target = e.currentTarget as HTMLElement;
     const rect = target.getBoundingClientRect();
     const task = tasks.find(t => t.id === taskId);
-    
+
     if (task && !task.completed) {
-      // Task is being completed - spawn stud popup
       spawnStudPopup(rect, '#C91A09');
+      incrementStudTotal();
+    } else if (task && task.completed) {
+      decrementStudTotal();
     }
     toggleTaskComplete(taskId);
   };
@@ -120,9 +136,16 @@ export default function TaskList() {
     const rect = target.getBoundingClientRect();
     const task = tasks.find(t => t.id === taskId);
     const sub = task?.subTasks.find(s => s.id === subTaskId);
-    
+
     if (sub && !sub.completed) {
+      // Steps do animation but don't add to stud total
       spawnStudPopup(rect, '#0055BF');
+      const allCompleted = task!.subTasks.filter(s => s.id !== subTaskId).every(s => s.completed);
+      if (allCompleted) {
+        // This was the last step - trigger break & reappear
+        setBreakingTaskId(taskId);
+        setTimeout(() => setBreakingTaskId(null), 700);
+      }
     }
     toggleSubTask(taskId, subTaskId);
   };
@@ -140,6 +163,52 @@ export default function TaskList() {
     }
   };
 
+  // Drag & drop for steps
+  const handleDragStart = (e: React.DragEvent, taskId: string, stepId: string) => {
+    setDraggingStepId(stepId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', JSON.stringify({ taskId, stepId }));
+  };
+
+  const handleDragOver = (e: React.DragEvent, taskId: string, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverTaskId(taskId);
+    setDragOverIndex(index);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverTaskId(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetTaskId: string, targetIndex: number) => {
+    e.preventDefault();
+    setDraggingStepId(null);
+    setDragOverTaskId(null);
+    setDragOverIndex(null);
+
+    try {
+      const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+      if (data.taskId !== targetTaskId) return;
+
+      const task = tasks.find(t => t.id === targetTaskId);
+      if (!task) return;
+
+      const fromIndex = task.subTasks.findIndex(st => st.id === data.stepId);
+      if (fromIndex === -1 || fromIndex === targetIndex) return;
+
+      const newSubTasks = [...task.subTasks];
+      const [moved] = newSubTasks.splice(fromIndex, 1);
+      const insertIndex = targetIndex > fromIndex ? targetIndex - 1 : targetIndex;
+      newSubTasks.splice(insertIndex, 0, moved);
+
+      reorderSubTasks(targetTaskId, newSubTasks.map(st => st.id));
+    } catch {
+      // ignore
+    }
+  };
+
   return (
     <main 
       className="flex-1 flex flex-col min-w-0 transition-colors duration-300 relative"
@@ -154,9 +223,10 @@ export default function TaskList() {
             left: stud.x,
             top: stud.y,
             backgroundColor: stud.color,
-            '--tx': `${stud.tx}px`,
-            '--tx2': `${stud.tx2}px`,
+            '--target-x': `${stud.targetX}px`,
             '--target-y': `${stud.targetY}px`,
+            '--mid-x': `${stud.targetX * 0.3}px`,
+            '--mid-y': `${stud.targetY * 0.3 - 40}px`,
           } as React.CSSProperties}
         />
       ))}
@@ -226,18 +296,10 @@ export default function TaskList() {
             />
             <div className="flex items-center justify-between">
               <div className="flex gap-2">
-                <button
-                  className="btn-icon w-7 h-7 rounded"
-                  style={{ color: theme.textSecondary }}
-                  onClick={() => {}}
-                >
+                <button className="btn-icon w-7 h-7 rounded" style={{ color: theme.textSecondary }} onClick={() => {}}>
                   <Calendar size={16} />
                 </button>
-                <button
-                  className="btn-icon w-7 h-7 rounded"
-                  style={{ color: theme.textSecondary }}
-                  onClick={() => {}}
-                >
+                <button className="btn-icon w-7 h-7 rounded" style={{ color: theme.textSecondary }} onClick={() => {}}>
                   <Repeat size={16} />
                 </button>
               </div>
@@ -270,6 +332,10 @@ export default function TaskList() {
             const hasSubtasks = task.subTasks.length > 0;
             const completedSubtasks = task.subTasks.filter(st => st.completed).length;
             const isEditing = selectedTaskId === task.id;
+            const isBreaking = breakingTaskId === task.id;
+
+            const incompleteSteps = task.subTasks.filter(st => !st.completed);
+            const completeSteps = task.subTasks.filter(st => st.completed);
 
             return (
               <div key={task.id} className="task-appear">
@@ -320,6 +386,9 @@ export default function TaskList() {
                         >
                           <Calendar size={10} />
                           {dueLabel.text}
+                          {dueLabel.overdue && (
+                            <span className="angry-lego-head" title="Overdue!">😠</span>
+                          )}
                         </span>
                       )}
                       {task.recurrence !== 'none' && (
@@ -361,7 +430,6 @@ export default function TaskList() {
 
                   {/* Actions */}
                   <div className="flex items-center gap-1">
-                    {/* Steps Expand Toggle (if has subtasks) */}
                     {hasSubtasks && (
                       <button
                         onClick={() => toggleExpand(task.id)}
@@ -373,7 +441,6 @@ export default function TaskList() {
                       </button>
                     )}
 
-                    {/* Edit Button */}
                     <button
                       onClick={() => setSelectedTaskId(isEditing ? null : task.id)}
                       className="btn-icon w-7 h-7 rounded hover:bg-black/5 dark:hover:bg-white/10"
@@ -386,37 +453,25 @@ export default function TaskList() {
                       <Pencil size={14} />
                     </button>
 
-                    {/* Important Toggle */}
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleImportant(task.id);
-                      }}
+                      onClick={(e) => { e.stopPropagation(); toggleImportant(task.id); }}
                       className="btn-icon w-7 h-7 rounded"
                       style={{ color: task.important ? '#ffc107' : theme.textSecondary }}
                     >
                       <Star size={16} fill={task.important ? '#ffc107' : 'none'} />
                     </button>
 
-                    {/* My Day Toggle */}
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleMyDay(task.id);
-                      }}
+                      onClick={(e) => { e.stopPropagation(); toggleMyDay(task.id); }}
                       className="btn-icon w-7 h-7 rounded"
                       style={{ color: task.myDay ? '#ffc107' : theme.textSecondary }}
                     >
                       <Sun size={16} />
                     </button>
 
-                    {/* More Menu */}
                     <div className="relative">
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setMenuTaskId(menuTaskId === task.id ? null : task.id);
-                        }}
+                        onClick={(e) => { e.stopPropagation(); setMenuTaskId(menuTaskId === task.id ? null : task.id); }}
                         className="btn-icon w-7 h-7 rounded"
                         style={{ color: theme.textSecondary }}
                       >
@@ -425,10 +480,7 @@ export default function TaskList() {
                       {menuTaskId === task.id && (
                         <div 
                           className="absolute right-0 top-8 z-10 w-40 py-1 rounded-lg border shadow-lg"
-                          style={{ 
-                            backgroundColor: theme.card,
-                            borderColor: theme.border,
-                          }}
+                          style={{ backgroundColor: theme.card, borderColor: theme.border }}
                         >
                           <button
                             onClick={() => { deleteTask(task.id); setMenuTaskId(null); }}
@@ -463,47 +515,88 @@ export default function TaskList() {
                       </span>
                     </div>
 
-                    {/* Step List */}
+                    {/* Brick Stack - Completed Steps shown as bricks */}
+                    {completeSteps.length > 0 && (
+                      <div 
+                        className={`brick-stack-container ${isBreaking ? 'stack-break' : ''}`}
+                        style={{ backgroundColor: theme.card }}
+                        key={isBreaking ? 'breaking' : 'stable'}
+                      >
+                        {completeSteps.map((subtask, idx) => (
+                          <div
+                            key={subtask.id}
+                            className="brick-stack-item stack-reappear"
+                            style={{
+                              width: `${Math.max(40, subtask.title.length * 6 + 20)}px`,
+                              backgroundColor: SUBTASK_COLORS[idx % SUBTASK_COLORS.length],
+                            }}
+                            title={subtask.title}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Incomplete Step List - Drag to reorder */}
                     <div className="space-y-1">
-                      {task.subTasks.map(subtask => (
-                        <div
-                          key={subtask.id}
-                          className="flex items-center gap-2 px-2 py-1.5 rounded-lg group hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                        >
-                          <button
-                            onClick={(e) => handleToggleSub(task.id, subtask.id, e)}
-                            className={`shrink-0 w-4 h-4 flex items-center justify-center lego-stud ${subtask.completed ? 'checked' : 'unchecked'}`}
+                      {incompleteSteps.map((subtask, index) => {
+                        const isDragOver = dragOverTaskId === task.id && dragOverIndex === index;
+                        const isDragging = draggingStepId === subtask.id;
+                        const color = SUBTASK_COLORS[index % SUBTASK_COLORS.length];
+
+                        return (
+                          <div
+                            key={subtask.id}
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, task.id, subtask.id)}
+                            onDragOver={(e) => handleDragOver(e, task.id, index)}
+                            onDragLeave={handleDragLeave}
+                            onDrop={(e) => handleDrop(e, task.id, index)}
+                            className={`flex items-center gap-2 px-2 py-1.5 rounded-lg group transition-all
+                              ${isDragOver ? 'step-drag-over' : ''}
+                              ${isDragging ? 'step-dragging' : ''}`}
                             style={{
-                              backgroundColor: subtask.completed ? '#0055BF' : '#D1D5DB',
-                              boxShadow: subtask.completed
-                                ? 'inset 0 2px 4px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.15)'
-                                : 'inset 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08)',
+                              backgroundColor: isDragging ? theme.card : 'transparent',
+                              borderRadius: '8px',
                             }}
                           >
-                            {subtask.completed && (
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="20 6 9 17 4 12" />
-                              </svg>
-                            )}
-                          </button>
-                          <span
-                            className="flex-1 text-sm"
-                            style={{
-                              color: subtask.completed ? theme.textSecondary : theme.text,
-                              textDecoration: subtask.completed ? 'line-through' : 'none',
-                            }}
-                          >
-                            {subtask.title}
-                          </span>
-                          <button
-                            onClick={() => deleteSubTask(task.id, subtask.id)}
-                            className="opacity-0 group-hover:opacity-100 btn-icon w-5 h-5 rounded hover:bg-red-500/10 transition-opacity"
-                            style={{ color: '#d83b01' }}
-                          >
-                            <Trash2 size={10} />
-                          </button>
-                        </div>
-                      ))}
+                            {/* Drag Handle */}
+                            <div className="step-drag-handle flex items-center justify-center w-4 h-4">
+                              <GripVertical size={12} style={{ color: theme.textSecondary }} />
+                            </div>
+
+                            {/* Checkbox */}
+                            <button
+                              onClick={(e) => handleToggleSub(task.id, subtask.id, e)}
+                              className={`shrink-0 w-4 h-4 flex items-center justify-center lego-stud ${subtask.completed ? 'checked' : 'unchecked'}`}
+                              style={{
+                                backgroundColor: subtask.completed ? color : '#D1D5DB',
+                                boxShadow: subtask.completed
+                                  ? 'inset 0 2px 4px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.15)'
+                                  : 'inset 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08)',
+                              }}
+                            >
+                              {subtask.completed && (
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              )}
+                            </button>
+                            <span
+                              className="flex-1 text-sm"
+                              style={{ color: subtask.completed ? theme.textSecondary : theme.text }}
+                            >
+                              {subtask.title}
+                            </span>
+                            <button
+                              onClick={() => deleteSubTask(task.id, subtask.id)}
+                              className="opacity-0 group-hover:opacity-100 btn-icon w-5 h-5 rounded hover:bg-red-500/10 transition-opacity"
+                              style={{ color: '#d83b01' }}
+                            >
+                              <Trash2 size={10} />
+                            </button>
+                          </div>
+                        );
+                      })}
                     </div>
 
                     {/* Add Subtask Inline */}

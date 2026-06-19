@@ -21,6 +21,7 @@ interface TodoContextType {
   
   studTotal: number;
   incrementStudTotal: () => void;
+  decrementStudTotal: () => void;
   
   // Task CRUD
   addTask: (title: string, listId?: string) => Task;
@@ -34,6 +35,7 @@ interface TodoContextType {
   addSubTask: (taskId: string, title: string) => void;
   toggleSubTask: (taskId: string, subTaskId: string) => void;
   deleteSubTask: (taskId: string, subTaskId: string) => void;
+  reorderSubTasks: (taskId: string, subTaskIds: string[]) => void;
   
   // Lists
   addList: (name: string, color: string) => void;
@@ -237,6 +239,10 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
     setStudTotal(prev => prev + 1);
   }, [setStudTotal]);
 
+  const decrementStudTotal = useCallback(() => {
+    setStudTotal(prev => Math.max(0, prev - 1));
+  }, [setStudTotal]);
+
   const addTask = useCallback((title: string, listId?: string) => {
     const targetListId = listId || currentListId;
     const newTask: Task = {
@@ -320,6 +326,14 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
     }));
   }, [setTasks]);
 
+  const reorderSubTasks = useCallback((taskId: string, subTaskIds: string[]) => {
+    setTasks(prev => prev.map(t => {
+      if (t.id !== taskId) return t;
+      const ordered = subTaskIds.map(id => t.subTasks.find(st => st.id === id)).filter(Boolean) as typeof t.subTasks;
+      return { ...t, subTasks: ordered };
+    }));
+  }, [setTasks]);
+
   const addList = useCallback((name: string, color: string) => {
     const newList: TodoList = {
       id: uuidv4(),
@@ -363,11 +377,13 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
     addSubTask,
     toggleSubTask,
     deleteSubTask,
+    reorderSubTasks,
     addList,
     deleteList,
     addTag,
     studTotal,
     incrementStudTotal,
+    decrementStudTotal,
     getCompletedTasksCount,
     getFilteredTasks,
     getTaskById,
@@ -379,10 +395,10 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
   }), [
     tasks, lists, tags, currentListId, selectedTaskId, theme, searchQuery, studTotal,
     addTask, updateTask, deleteTask, toggleTaskComplete, toggleMyDay, toggleImportant,
-    addSubTask, toggleSubTask, deleteSubTask, addList, deleteList, addTag,
+    addSubTask, toggleSubTask, deleteSubTask, reorderSubTasks, addList, deleteList, addTag,
     getFilteredTasks, getTaskById, getTasksByList, getOverdueCount, getTodayCount,
     getImportantCount, getPlannedCount, setCurrentListId, setSearchQuery, setTheme,
-    incrementStudTotal, getCompletedTasksCount,
+    incrementStudTotal, decrementStudTotal, getCompletedTasksCount,
   ]);
 
   return (

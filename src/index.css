@@ -65,7 +65,7 @@
   opacity: 0.5;
 }
 
-/* ===== LEGO STUD POPUP / FLOAT ANIMATION ===== */
+/* ===== LEGO STUD POPUP / FLOAT TO COUNTER ANIMATION ===== */
 .stud-popup {
   position: fixed;
   width: 20px;
@@ -73,7 +73,7 @@
   border-radius: 50%;
   pointer-events: none;
   z-index: 9999;
-  animation: studFloatToTop 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation: studFlyToCounter 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 .stud-popup::before {
@@ -87,22 +87,22 @@
   background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.5), transparent 60%);
 }
 
-@keyframes studFloatToTop {
+@keyframes studFlyToCounter {
   0% {
     opacity: 1;
-    transform: translate(0, 0) scale(1) rotate(0deg);
+    transform: translate(0, 0) scale(1);
   }
-  30% {
+  20% {
     opacity: 1;
-    transform: translate(var(--tx, 20px), -40px) scale(1.3) rotate(15deg);
+    transform: translate(calc(var(--mid-x) * 0.3), calc(var(--mid-y) * 0.3)) scale(1.2);
   }
   70% {
-    opacity: 0.8;
-    transform: translate(var(--tx2, -10px), -200px) scale(1) rotate(-10deg);
+    opacity: 0.9;
+    transform: translate(calc(var(--target-x) * 0.8), calc(var(--target-y) * 0.8)) scale(0.8);
   }
   100% {
     opacity: 0;
-    transform: translate(var(--tx2, 0px), var(--target-y, -400px)) scale(0.3) rotate(0deg);
+    transform: translate(var(--target-x), var(--target-y)) scale(0.3);
   }
 }
 
@@ -115,6 +115,228 @@
   40% { transform: scale(1.5); }
   70% { transform: scale(0.9); }
   100% { transform: scale(1); }
+}
+
+/* ===== SIDEBAR LEGO BRICK STACK ===== */
+.sidebar-brick {
+  position: relative;
+  border-radius: 4px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 
+    0 2px 0 rgba(0,0,0,0.15),
+    0 3px 4px rgba(0,0,0,0.1),
+    inset 0 1px 0 rgba(255,255,255,0.15);
+  margin-bottom: 3px;
+}
+
+.sidebar-brick::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 8px;
+  width: 10px;
+  height: 5px;
+  border-radius: 3px 3px 0 0;
+  background: inherit;
+  box-shadow: 
+    14px 0 0 inherit,
+    28px 0 0 inherit;
+  filter: brightness(0.85);
+}
+
+.sidebar-brick:hover {
+  transform: translateY(-1px);
+  box-shadow: 
+    0 3px 0 rgba(0,0,0,0.15),
+    0 5px 8px rgba(0,0,0,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.15);
+}
+
+.sidebar-brick:active {
+  transform: translateY(0);
+  box-shadow: 
+    0 1px 0 rgba(0,0,0,0.15),
+    0 2px 3px rgba(0,0,0,0.1),
+    inset 0 1px 0 rgba(255,255,255,0.15);
+}
+
+.sidebar-brick-active {
+  box-shadow: 
+    0 2px 0 rgba(0,0,0,0.2),
+    0 3px 6px rgba(0,0,0,0.15),
+    inset 0 1px 0 rgba(255,255,255,0.25);
+  transform: translateX(3px);
+}
+
+/* ===== STEP BRICK ANIMATIONS ===== */
+.step-brick-row {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.step-brick-checked {
+  animation: stepToBrick 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.step-brick-unchecked {
+  animation: brickToStep 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes stepToBrick {
+  0% { 
+    transform: scale(1) translateX(0);
+    border-radius: 8px;
+  }
+  50% {
+    transform: scale(0.95) translateX(4px);
+    border-radius: 6px;
+  }
+  100% { 
+    transform: scale(1) translateX(0);
+    border-radius: 4px;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.1), 0 3px 4px rgba(0,0,0,0.08);
+  }
+}
+
+@keyframes brickToStep {
+  0% { 
+    transform: scale(1) translateX(0);
+    border-radius: 4px;
+  }
+  50% {
+    transform: scale(0.97) translateX(-2px);
+  }
+  100% { 
+    transform: scale(1) translateX(0);
+    border-radius: 8px;
+  }
+}
+
+/* ===== BRICK STACK ===== */
+.brick-stack-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 6px;
+  border-radius: 6px;
+  min-height: 28px;
+  transition: all 0.3s ease;
+}
+
+.brick-stack-item {
+  height: 20px;
+  border-radius: 3px;
+  position: relative;
+  animation: brickStackIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  flex-shrink: 0;
+}
+
+.brick-stack-item::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 4px;
+  border-radius: 2px 2px 0 0;
+  background: inherit;
+  filter: brightness(0.9);
+}
+
+@keyframes brickStackIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.5);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(2px) scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.brick-stack-out {
+  animation: brickStackOut 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes brickStackOut {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.5) translateY(-10px);
+  }
+}
+
+/* Break apart and reappear */
+.stack-break {
+  animation: stackBreak 0.6s ease-in-out;
+}
+
+@keyframes stackBreak {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.05) rotate(1deg); }
+  50% { transform: scale(0.95) rotate(-1deg); }
+  70% { transform: scale(1.02) rotate(0.5deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+.stack-reappear {
+  animation: stackReappear 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes stackReappear {
+  0% { opacity: 0; transform: scale(0.8); }
+  60% { opacity: 1; transform: scale(1.03); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* ===== DRAG REORDER - BRICK PICK UP ===== */
+.step-dragging {
+  opacity: 0.9;
+  transform: rotate(3deg) scale(1.02) translateY(-2px);
+  cursor: grabbing;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15) !important;
+  z-index: 10;
+}
+
+.step-drag-over {
+  border-top: 2px dashed #0055BF;
+  padding-top: 2px;
+}
+
+.step-drag-handle {
+  cursor: grab;
+  opacity: 0.3;
+  transition: opacity 0.15s ease;
+}
+
+.step-drag-handle:hover {
+  opacity: 0.7;
+}
+
+.step-drag-handle:active {
+  cursor: grabbing;
+}
+
+/* ===== ANGRY LEGO HEAD ===== */
+.angry-lego-head {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  animation: angryHeadBob 1.5s ease-in-out infinite;
+}
+
+@keyframes angryHeadBob {
+  0%, 100% { transform: translateY(0) rotate(-5deg); }
+  50% { transform: translateY(-2px) rotate(5deg); }
 }
 
 /* ===== LEGO THEME STYLES ===== */
@@ -191,7 +413,7 @@
 }
 
 .task-dropdown.open {
-  max-height: 500px;
+  max-height: 600px;
   opacity: 1;
 }
 
